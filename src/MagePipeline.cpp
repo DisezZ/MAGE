@@ -2,9 +2,9 @@
 
 namespace mage
 {
-    MagePipeline::MagePipeline(const std::string &vertFilePath, const std::string &fragFilePath)
+    MagePipeline::MagePipeline(MageDevice &device, const std::string &vertFilePath, const std::string &fragFilePath, const PipelineConfigInfo &configInfo) : mageDevice{device}
     {
-        createGraphicsPipeline(vertFilePath, fragFilePath);
+        createGraphicsPipeline(vertFilePath, fragFilePath, configInfo);
     }
 
     MagePipeline::~MagePipeline()
@@ -29,7 +29,7 @@ namespace mage
         return buffer;
     }
 
-    void MagePipeline::createGraphicsPipeline(const std::string &vertFilePath, const std::string &fragFilePath)
+    void MagePipeline::createGraphicsPipeline(const std::string &vertFilePath, const std::string &fragFilePath, const PipelineConfigInfo &configInfo)
     {
         auto vertCode = readFile(vertFilePath);
         auto fragCode = readFile(fragFilePath);
@@ -38,4 +38,23 @@ namespace mage
         std::cout << "Fragment Shader Code Size: " << fragCode.size() << std::endl;
     }
 
+    void MagePipeline::createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule)
+    {
+        VkShaderModuleCreateInfo createInfo{
+            .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+            .codeSize = code.size(),
+            .pCode = reinterpret_cast<const uint32_t *>(code.data())};
+
+        if (vkCreateShaderModule(mageDevice.device(), &createInfo, nullptr, shaderModule) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to created shader module");
+        }
+    }
+
+    PipelineConfigInfo MagePipeline::defaultPipelineConfigInfo(uint32_t width, uint height)
+    {
+        PipelineConfigInfo configInfo{};
+
+        return configInfo;
+    }
 } // namespace mage

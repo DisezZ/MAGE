@@ -21,4 +21,12 @@ namespace mage
 
         window = glfwCreateWindow(width, height, windowName.c_str(), nullptr, nullptr);
     }
+
+    void MageWindow::createWindowSurface(VkInstance instace, VkSurfaceKHR *surface)
+    {
+        if (glfwCreateWindowSurface(instace, window, nullptr, surface) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create window surface");
+        }
+    }
 }

@@ -6,6 +6,7 @@
 #include <utility>
 #include <memory>
 #include <fstream>
+#include <cstring>
 
 #include <array>
 #include <list>

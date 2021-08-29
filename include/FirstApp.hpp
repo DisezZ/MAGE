@@ -2,6 +2,7 @@
 
 #include "MageWindow.hpp"
 #include "MagePipeline.hpp"
+#include "MageDevice.hpp"
 #include "NoCopy.hpp"
 
 namespace mage
@@ -19,6 +20,7 @@ namespace mage
 
     private:
         MageWindow mageWindow{WIDTH, HEIGHT, "Vulkan::Mage Engine"};
-        MagePipeline magePipeline{"shaders/shaderSimple.vert.spv", "shaders/shaderSimple.frag.spv"};
+        MageDevice mageDevice{mageWindow};
+        MagePipeline magePipeline{mageDevice, "shaders/shaderSimple.vert.spv", "shaders/shaderSimple.frag.spv", MagePipeline::defaultPipelineConfigInfo(WIDTH, HEIGHT)};
     };
 } // namespace mage
