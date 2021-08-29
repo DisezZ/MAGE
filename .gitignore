@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+# Shader SPIR-V
+*.spv
+
+# .vscode
+.vscode
