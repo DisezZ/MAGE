@@ -3,11 +3,13 @@
 # 'make clean'  removes all .o and executable files
 #
 
+include .env
+
 # define the Cpp compiler to use
 CXX = g++
 
 # define any compile-time flags
-CXXFLAGS	:= -std=c++20 -Wall -Wextra -g
+CXXFLAGS	:= -std=c++17 -Wall -Wextra -g
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
@@ -56,6 +58,12 @@ SOURCES		:= $(wildcard $(patsubst %,%/*.cpp, $(SOURCEDIRS)))
 # define the C object files 
 OBJECTS		:= $(SOURCES:.cpp=.o)
 
+# compile and create list of .spv file for vertex and fragment shader
+vertSources = $(shell find ./shaders -type f -name "*.vert")
+vertObjFiles = $(patsubst %.vert, %.vert.spv, $(vertSources))
+fragSources = $(shell find ./shaders -type f -name "*.frag")
+fragObjFiles = $(patsubst %.frag, %.frag.spv, $(fragSources))
+
 #
 # The following part of the makefile is generic; it can be used to 
 # build any executable just by changing the definitions above and by
@@ -71,6 +79,7 @@ all: $(OUTPUT) $(MAIN)
 $(OUTPUT):
 	$(MD) $(OUTPUT)
 
+$(MAIN): $(vertObjFiles) $(fragObjFiles)
 $(MAIN): $(OBJECTS) 
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(OUTPUTMAIN) $(OBJECTS) $(LFLAGS) $(LIBS)
 
@@ -80,6 +89,9 @@ $(MAIN): $(OBJECTS)
 # (see the gnu make manual section about automatic variables)
 .cpp.o:
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $<  -o $@
+
+%.spv: %
+	${GLSLC} $< -o $@
 
 .PHONY: clean
 clean:

@@ -7,6 +7,7 @@
 #include <memory>
 #include <fstream>
 #include <cstring>
+#include <cstdlib>
 
 #include <array>
 #include <list>
@@ -23,3 +24,4 @@
 #include <cassert>
 #include <stdexcept>
 #include <optional>
+#include <limits>

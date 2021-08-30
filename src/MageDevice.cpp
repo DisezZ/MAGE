@@ -11,8 +11,8 @@ namespace mage
         const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
         void *pUserData)
     {
-        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
-
+        std::cerr << "validation layer: "<< messageSeverity << ":: " << messageType << "::: " << pCallbackData->pMessage << ":::: " << &pUserData << std::endl;
+        
         return VK_FALSE;
     }
 
