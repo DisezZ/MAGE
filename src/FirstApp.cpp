@@ -29,9 +29,9 @@ namespace mage
     void FirstApp::loadModels()
     {
         std::vector<MageModel::Vertex> vertices{
-            {{0.0f, -0.5f, 0.0f}},
-            {{0.5f, 0.5f, 0.0f}},
-            {{-0.5f, 0.5f, 0.0f}}
+            {{0.0f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+            {{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+            {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}
         };
 
         mageModel = std::make_unique<MageModel>(mageDevice, vertices);
@@ -97,7 +97,7 @@ namespace mage
             renderPassInfo.renderArea.extent = mageSwapChain.getSwapChainExtent();
 
             std::array<VkClearValue, 2> clearValue{};
-            clearValue[0].color = {0.2f, 0.4f, 0.2f, 1.0f};
+            clearValue[0].color = {0.2f, 0.2f, 0.2f, 1.0f};
             clearValue[1].depthStencil = {1.0f, 0};
             renderPassInfo.clearValueCount = clearValue.size();
             renderPassInfo.pClearValues = clearValue.data();
