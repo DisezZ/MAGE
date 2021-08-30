@@ -28,11 +28,14 @@ namespace mage
         void createPipelineLayout();
         void createPipeline();
         void createCommandBuffers();
+        void freeCommandBuffers();
         void drawFrame();
+        void recreateSwapChain();
+        void recordCommandBuffer(int imageIndex);
 
         MageWindow mageWindow{WIDTH, HEIGHT, "Vulkan::Mage Engine"};
         MageDevice mageDevice{mageWindow};
-        MageSwapChain mageSwapChain{mageDevice, mageWindow.getExtent()};
+        std::unique_ptr<MageSwapChain> mageSwapChain;
         std::unique_ptr<MagePipeline> magePipeline;
         VkPipelineLayout pipelineLayout;
         std::vector<VkCommandBuffer> commandBuffers;

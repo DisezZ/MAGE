@@ -1,6 +1,8 @@
 #pragma once
 
 #include "slx.hpp"
+
+#include "NoCopy.hpp"
 #include "MageWindow.hpp"
 
 namespace mage
@@ -22,7 +24,7 @@ namespace mage
         bool isComplete() { return graphicsFamilyHasValue && presentFamilyHasValue; }
     };
 
-    class MageDevice
+    class MageDevice : NoCopy
     {
     public:
 #ifdef NDEBUG
@@ -33,12 +35,6 @@ namespace mage
 
         MageDevice(MageWindow &window);
         ~MageDevice();
-
-        // Not copyable or movable
-        MageDevice(const MageDevice &) = delete;
-        void operator=(const MageDevice &) = delete;
-        MageDevice(MageDevice &&) = delete;
-        MageDevice &operator=(MageDevice &&) = delete;
 
         VkCommandPool getCommandPool() { return commandPool; }
         VkDevice device() { return device_; }

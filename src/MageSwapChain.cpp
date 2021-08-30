@@ -6,6 +6,20 @@ namespace mage
     MageSwapChain::MageSwapChain(MageDevice &deviceRef, VkExtent2D extent)
         : device{deviceRef}, windowExtent{extent}
     {
+        init();
+    }
+
+    MageSwapChain::MageSwapChain(MageDevice &deviceRef, VkExtent2D extent, std::shared_ptr<MageSwapChain> previous)
+        : device{deviceRef}, windowExtent{extent}, oldSwapChain{previous}
+    {
+        init();
+
+        // cleanup
+        oldSwapChain = nullptr;
+    }
+
+    void MageSwapChain::init()
+    {
         createSwapChain();
         createImageViews();
         createRenderPass();
@@ -170,7 +184,7 @@ namespace mage
         createInfo.presentMode = presentMode;
         createInfo.clipped = VK_TRUE;
 
-        createInfo.oldSwapchain = VK_NULL_HANDLE;
+        createInfo.oldSwapchain = oldSwapChain == nullptr ? VK_NULL_HANDLE : oldSwapChain->swapChain;
 
         if (vkCreateSwapchainKHR(device.device(), &createInfo, nullptr, &swapChain) != VK_SUCCESS)
         {

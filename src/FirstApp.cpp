@@ -6,7 +6,7 @@ namespace mage
     {
         loadModels();
         createPipelineLayout();
-        createPipeline();
+        recreateSwapChain();
         createCommandBuffers();
     }
 
@@ -31,8 +31,7 @@ namespace mage
         std::vector<MageModel::Vertex> vertices{
             {{0.0f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
             {{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-            {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}
-        };
+            {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}};
 
         mageModel = std::make_unique<MageModel>(mageDevice, vertices);
     }
@@ -53,8 +52,11 @@ namespace mage
 
     void FirstApp::createPipeline()
     {
-        auto pipelineConfig = MagePipeline::defaultPipelineConfigInfo(mageSwapChain.width(), mageSwapChain.height());
-        pipelineConfig.renderPass = mageSwapChain.getRenderPass();
+        assert(mageSwapChain != nullptr && "can't create pipeline before swap chain");
+        assert(pipelineLayout != nullptr && "can't create pipeline before pipeline layout");
+        PipelineConfigInfo pipelineConfig{};
+        MagePipeline::defaultPipelineConfigInfo(pipelineConfig);
+        pipelineConfig.renderPass = mageSwapChain->getRenderPass();
         pipelineConfig.pipelineLayout = pipelineLayout;
         magePipeline = std::make_unique<MagePipeline>(
             mageDevice,
@@ -63,9 +65,35 @@ namespace mage
             pipelineConfig);
     }
 
+    void FirstApp::recreateSwapChain()
+    {
+        auto extent = mageWindow.getExtent();
+        while (extent.width == 0 || extent.height == 0)
+        {
+            extent = mageWindow.getExtent();
+            glfwWaitEvents();
+        }
+
+        vkDeviceWaitIdle(mageDevice.device());
+
+        if (mageSwapChain == nullptr)
+            mageSwapChain = std::make_unique<MageSwapChain>(mageDevice, extent);
+        else
+        {
+            mageSwapChain = std::make_unique<MageSwapChain>(mageDevice, extent, std::move(mageSwapChain));
+            if (mageSwapChain->imageCount() != commandBuffers.size())
+            {
+                freeCommandBuffers();
+                createCommandBuffers();
+            }
+        }
+        // if render pass compatible do nothing else recreate pipeline
+        createPipeline();
+    }
+
     void FirstApp::createCommandBuffers()
     {
-        commandBuffers.resize(mageSwapChain.imageCount());
+        commandBuffers.resize(mageSwapChain->imageCount());
 
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -77,56 +105,85 @@ namespace mage
         {
             throw std::runtime_error("falied to allocate commad buffers");
         }
+    }
 
-        for (int i = 0; i < static_cast<int>(commandBuffers.size()); i++)
+    void FirstApp::freeCommandBuffers()
+    {
+        vkFreeCommandBuffers(mageDevice.device(), mageDevice.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+        commandBuffers.clear();
+    }
+
+    void FirstApp::recordCommandBuffer(int imageIndex)
+    {
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+        if (vkBeginCommandBuffer(commandBuffers[imageIndex], &beginInfo) != VK_SUCCESS)
         {
-            VkCommandBufferBeginInfo beginInfo{};
-            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            throw std::runtime_error("falied to begin recording command buffers");
+        }
 
-            if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS)
-            {
-                throw std::runtime_error("falied to begin recording command buffers");
-            }
+        VkRenderPassBeginInfo renderPassInfo{};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassInfo.renderPass = mageSwapChain->getRenderPass();
+        renderPassInfo.framebuffer = mageSwapChain->getFrameBuffer(imageIndex);
 
-            VkRenderPassBeginInfo renderPassInfo{};
-            renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            renderPassInfo.renderPass = mageSwapChain.getRenderPass();
-            renderPassInfo.framebuffer = mageSwapChain.getFrameBuffer(i);
+        renderPassInfo.renderArea.offset = {0, 0};
+        renderPassInfo.renderArea.extent = mageSwapChain->getSwapChainExtent();
 
-            renderPassInfo.renderArea.offset = {0, 0};
-            renderPassInfo.renderArea.extent = mageSwapChain.getSwapChainExtent();
+        std::array<VkClearValue, 2> clearValue{};
+        clearValue[0].color = {0.2f, 0.2f, 0.2f, 1.0f};
+        clearValue[1].depthStencil = {1.0f, 0};
+        renderPassInfo.clearValueCount = clearValue.size();
+        renderPassInfo.pClearValues = clearValue.data();
 
-            std::array<VkClearValue, 2> clearValue{};
-            clearValue[0].color = {0.2f, 0.2f, 0.2f, 1.0f};
-            clearValue[1].depthStencil = {1.0f, 0};
-            renderPassInfo.clearValueCount = clearValue.size();
-            renderPassInfo.pClearValues = clearValue.data();
+        vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-            vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        VkViewport viewport{};
+        viewport.x = 0.0f;
+        viewport.y = 0.0f;
+        viewport.width = static_cast<float>(mageSwapChain->getSwapChainExtent().width);
+        viewport.height = static_cast<float>(mageSwapChain->getSwapChainExtent().height);
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+        VkRect2D scissor{{0, 0}, mageSwapChain->getSwapChainExtent()};
+        vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &viewport);
+        vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &scissor);
 
-            magePipeline->bind(commandBuffers[i]);
-            mageModel->bind(commandBuffers[i]);
-            mageModel->draw(commandBuffers[i]);
+        magePipeline->bind(commandBuffers[imageIndex]);
+        mageModel->bind(commandBuffers[imageIndex]);
+        mageModel->draw(commandBuffers[imageIndex]);
 
-            vkCmdEndRenderPass(commandBuffers[i]);
-            if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS)
-            {
-                throw std::runtime_error("failed to record command buffer");
-            }
+        vkCmdEndRenderPass(commandBuffers[imageIndex]);
+        if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to record command buffer");
         }
     }
 
     void FirstApp::drawFrame()
     {
         uint32_t imageIndex;
-        auto result = mageSwapChain.acquireNextImage(&imageIndex);
+        auto result = mageSwapChain->acquireNextImage(&imageIndex);
 
+        if (result == VK_ERROR_OUT_OF_DATE_KHR)
+        {
+            recreateSwapChain();
+            return;
+        }
         if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
         {
             throw std::runtime_error("failed to acquire swap chain image");
         }
 
-        result = mageSwapChain.submitCommandBuffers(&commandBuffers[imageIndex], &imageIndex);
+        recordCommandBuffer(imageIndex);
+        result = mageSwapChain->submitCommandBuffers(&commandBuffers[imageIndex], &imageIndex);
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || mageWindow.wasWindowResized())
+        {
+            mageWindow.resetWindowResizedFlag();
+            recreateSwapChain();
+            return;
+        }
         if (result != VK_SUCCESS)
         {
             throw std::runtime_error("failed to present swap chain image");
