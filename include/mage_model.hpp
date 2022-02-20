@@ -3,8 +3,8 @@
 #include "slx.hpp"
 #include "glx.hpp"
 
-#include "NoCopy.hpp"
-#include "MageDevice.hpp"
+#include "no_copy.hpp"
+#include "mage_device.hpp"
 
 namespace mage
 {

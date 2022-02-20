@@ -1,4 +1,4 @@
-#include "MageSwapChain.hpp"
+#include "mage_swap_chain.hpp"
 
 namespace mage
 {

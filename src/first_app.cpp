@@ -1,9 +1,9 @@
-#include "FirstApp.hpp"
+#include "first_app.hpp"
 
 namespace mage
 {
     struct PushConstantData {
-        glm::vec3 offset;
+        alignas(16) glm::vec3 offset;
         alignas(16) glm::vec3 color;
     };
 

@@ -2,8 +2,8 @@
 
 #include "slx.hpp"
 
-#include "NoCopy.hpp"
-#include "MageWindow.hpp"
+#include "no_copy.hpp"
+#include "mage_window.hpp"
 
 namespace mage
 {

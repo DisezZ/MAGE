@@ -1,4 +1,4 @@
-#include "MagePipeline.hpp"
+#include "mage_pipeline.hpp"
 
 namespace mage
 {

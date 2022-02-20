@@ -2,9 +2,9 @@
 
 #include "slx.hpp"
 
-#include "NoCopy.hpp"
-#include "MageDevice.hpp"
-#include "MageModel.hpp"
+#include "no_copy.hpp"
+#include "mage_device.hpp"
+#include "mage_model.hpp"
 
 namespace mage
 {

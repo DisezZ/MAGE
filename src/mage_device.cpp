@@ -1,5 +1,5 @@
 #include "slx.hpp"
-#include "MageDevice.hpp"
+#include "mage_device.hpp"
 
 namespace mage
 {

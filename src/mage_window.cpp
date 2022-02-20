@@ -1,4 +1,4 @@
-#include "MageWindow.hpp"
+#include "mage_window.hpp"
 
 namespace mage
 {

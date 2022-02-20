@@ -2,7 +2,7 @@
 
 #include "slx.hpp"
 #include "glx.hpp"
-#include "NoCopy.hpp"
+#include "no_copy.hpp"
 
 namespace mage
 {

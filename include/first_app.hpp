@@ -3,12 +3,12 @@
 #include "slx.hpp"
 #include "glx.hpp"
 
-#include "NoCopy.hpp"
-#include "MageWindow.hpp"
-#include "MagePipeline.hpp"
-#include "MageDevice.hpp"
-#include "MageSwapChain.hpp"
-#include "MageModel.hpp"
+#include "no_copy.hpp"
+#include "mage_window.hpp"
+#include "mage_pipeline.hpp"
+#include "mage_device.hpp"
+#include "mage_swap_chain.hpp"
+#include "mage_model.hpp"
 
 namespace mage
 {

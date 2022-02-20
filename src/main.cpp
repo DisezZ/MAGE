@@ -1,6 +1,6 @@
 #include "slx.hpp"
 #include "glx.hpp"
-#include "FirstApp.hpp"
+#include "first_app.hpp"
 
 int main()
 {
