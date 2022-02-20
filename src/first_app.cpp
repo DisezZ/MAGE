@@ -1,15 +1,18 @@
+#include <slx.hpp>
+
 #include "first_app.hpp"
 
 namespace mage
 {
     struct PushConstantData {
-        alignas(16) glm::vec3 offset;
-        alignas(16) glm::vec3 color;
+        alignas(16) glm::mat4 transform;
+        //alignas(16) glm::vec3 offset;
+        //alignas(16) glm::vec3 color;
     };
 
     FirstApp::FirstApp()
     {
-        loadModels();
+        loadGameObjects();
         createPipelineLayout();
         recreateSwapChain();
         createCommandBuffers();
@@ -22,6 +25,7 @@ namespace mage
 
     void FirstApp::run()
     {
+        std::cout << "maxPushConstantSize = " << mageDevice.properties.limits.maxPushConstantsSize << std::endl;
         while (!mageWindow.shouldClose())
         {
             glfwPollEvents();
@@ -31,14 +35,23 @@ namespace mage
         vkDeviceWaitIdle(mageDevice.device());
     }
 
-    void FirstApp::loadModels()
+    void FirstApp::loadGameObjects()
     {
         std::vector<MageModel::Vertex> vertices{
             {{0.0f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
             {{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
             {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}};
 
-        mageModel = std::make_unique<MageModel>(mageDevice, vertices);
+        auto mageModel = std::make_shared<MageModel>(mageDevice, vertices);
+
+        auto triangle = MageGameObject::createGameObject();
+        triangle.model = mageModel;
+        triangle.color = {.1f, .8f, .1f};
+        triangle.transform.translation.x = .2f;
+        triangle.transform.scale = {2.f, 0.5f, 1.f};
+        triangle.transform.rotation = .25f * glm::two_pi<float>();
+
+        gameObjects.push_back(std::move(triangle));
     }
 
     void FirstApp::createPipelineLayout()
@@ -160,22 +173,30 @@ namespace mage
         vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &viewport);
         vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &scissor);
 
-        magePipeline->bind(commandBuffers[imageIndex]);
-        mageModel->bind(commandBuffers[imageIndex]);
-        for (int j = 0; j < 4; j++)
-        {
-            PushConstantData push{};
-            push.offset = glm::vec3(0.0f, -0.4 + j * 0.25, 0.0f);
-            push.color = glm::vec3(0.0f, 0.0f, 0.2f + 0.2f * j);
-
-            vkCmdPushConstants(commandBuffers[imageIndex], pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstantData), &push);
-            mageModel->draw(commandBuffers[imageIndex]);
-        }
+        renderGameObjects(commandBuffers[imageIndex]);
 
         vkCmdEndRenderPass(commandBuffers[imageIndex]);
         if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to record command buffer");
+        }
+    }
+
+    void FirstApp::renderGameObjects(VkCommandBuffer commandBuffer) {
+        magePipeline->bind(commandBuffer);
+
+        for(auto &obj : gameObjects)
+        {
+            obj.transform.rotation = glm::mod(obj.transform.rotation + 0.01f, glm::two_pi<float>());
+
+            PushConstantData push{};
+            //push.offset = obj.transform.translation;
+            //push.color = obj.color;
+            push.transform = obj.transform.mat4();
+
+            vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstantData), &push);
+            obj.model->bind(commandBuffer);
+            obj.model->draw(commandBuffer);
         }
     }
 
