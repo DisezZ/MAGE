@@ -14,8 +14,8 @@ namespace mage
     struct TransformComponent
     {
         glm::vec3 translation{};
-        glm::vec3 scale{};
-        float rotation;
+        glm::vec3 scale{1.f, 1.f, 1.f};
+        glm::vec3 rotation{};
 
         glm::mat4 mat4();
     };

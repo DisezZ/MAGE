@@ -8,6 +8,7 @@
 #include "mage_device.hpp"
 #include "mage_game_object.hpp"
 #include "mage_renderer.hpp"
+#include "mage_camera.hpp"
 
 namespace mage
 {
@@ -23,6 +24,7 @@ namespace mage
         void run();
 
     private:
+        std::unique_ptr<MageModel> createCubeModel(MageDevice &device, glm::vec3 offset);
         void loadGameObjects();
 
         MageWindow mageWindow{WIDTH, HEIGHT, "Vulkan::Mage Engine"};

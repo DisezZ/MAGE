@@ -6,8 +6,7 @@ namespace mage
 {
     struct PushConstantData {
         alignas(16) glm::mat4 transform;
-        //alignas(16) glm::vec3 offset;
-        //alignas(16) glm::vec3 color;
+        alignas(16) glm::vec3 color;
     };
 
     SimpleRenderSystem::SimpleRenderSystem(MageDevice &device, VkRenderPass renderPass) : mageDevice{device} 
@@ -54,18 +53,18 @@ namespace mage
             pipelineConfig);
     }
 
-    void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<MageGameObject> &gameObjects) 
+    void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<MageGameObject> &gameObjects, const MageCamera &camera) 
     {
         magePipeline->bind(commandBuffer);
 
         for(auto &obj : gameObjects)
         {
-            obj.transform.rotation = glm::mod(obj.transform.rotation + 0.01f, glm::two_pi<float>());
+            obj.transform.rotation.y = glm::mod(obj.transform.rotation.y + 0.002f, glm::two_pi<float>());
+            obj.transform.rotation.x = glm::mod(obj.transform.rotation.x + 0.001f, glm::two_pi<float>());
 
             PushConstantData push{};
-            //push.offset = obj.transform.translation;
-            //push.color = obj.color;
-            push.transform = obj.transform.mat4();
+            push.color = obj.color;
+            push.transform = camera.getProjection() * obj.transform.mat4();
 
             vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstantData), &push);
             obj.model->bind(commandBuffer);

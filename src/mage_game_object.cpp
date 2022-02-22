@@ -3,13 +3,13 @@
 namespace mage
 {
     glm::mat4 TransformComponent::mat4() {
-        scale = glm::vec3{2.f, 1.f, 1.f};
+        glm::mat4 translateMat = glm::translate(glm::mat4{1.f}, translation);
+        glm::mat4 rotateMat = glm::toMat4(glm::quat{rotation});
+        glm::mat4 scaleMat = glm::scale(glm::mat4{1.f}, scale);
 
-        const float s = glm::sin(rotation);
-        const float c = glm::cos(rotation);
-        glm::mat4 rotMat{{c, s, 0.f, 0.f}, {-s, c, 0.f, 0.f}, {0.f, 0.f, 1.f, 0.f}, {0.f, 0.f, 0.f, 1.f}};
-        //glm::mat4 rotMat{1.f};
-        glm::mat4 scaleMat{{scale.x, 0.f, 0.f, 0.f}, {0.f, scale.y, 0.f, 0.f}, {0.f, 0.f, scale.z, 0.f}, {0.f, 0.f, 0.f, 1.f}};
-        return rotMat * scaleMat; 
+        glm::mat4 transform = translateMat * rotateMat * scaleMat;
+        
+        return transform;
     }
+    
 } // namespace mage

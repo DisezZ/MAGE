@@ -16,41 +16,97 @@ namespace mage
     void FirstApp::run()
     {
         SimpleRenderSystem simpleRenderSystem{mageDevice, mageRenderer.getSwapChainRenderPass()};
+        MageCamera mageCamera{};
 
         while (!mageWindow.shouldClose())
         {
             glfwPollEvents();
-            
+
+            float aspect = mageRenderer.getAspectRatio();
+            //mageCamera.setOrthographicProjection(-aspect, aspect, -1, 1, -1, 1);
+            mageCamera.setPerspectiveProjection(glm::radians(50.f), aspect, .1f, 10.f);
+
             if (auto commandBuffer = mageRenderer.beginFrame())
             {
                 mageRenderer.beginSwapChainRenderPass(commandBuffer);
-                simpleRenderSystem.renderGameObjects(commandBuffer, gameObjects);
+                simpleRenderSystem.renderGameObjects(commandBuffer, gameObjects, mageCamera);
                 mageRenderer.endSwapChainRenderPass(commandBuffer);
                 mageRenderer.endFrame();
             }
-            
         }
 
         vkDeviceWaitIdle(mageDevice.device());
     }
 
-    void FirstApp::loadGameObjects()
+    std::unique_ptr<MageModel> FirstApp::createCubeModel(MageDevice &device, glm::vec3 offset)
     {
         std::vector<MageModel::Vertex> vertices{
-            {{0.0f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-            {{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-            {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}};
 
-        auto mageModel = std::make_shared<MageModel>(mageDevice, vertices);
+            // left face (white)
+            {{-.5f, -.5f, -.5f}, {.9f, .9f, .9f}},
+            {{-.5f, .5f, .5f}, {.9f, .9f, .9f}},
+            {{-.5f, -.5f, .5f}, {.9f, .9f, .9f}},
+            {{-.5f, -.5f, -.5f}, {.9f, .9f, .9f}},
+            {{-.5f, .5f, -.5f}, {.9f, .9f, .9f}},
+            {{-.5f, .5f, .5f}, {.9f, .9f, .9f}},
 
-        auto triangle = MageGameObject::createGameObject();
-        triangle.model = mageModel;
-        triangle.color = {.1f, .8f, .1f};
-        triangle.transform.translation.x = .2f;
-        triangle.transform.scale = {2.f, 0.5f, 1.f};
-        triangle.transform.rotation = .25f * glm::two_pi<float>();
+            // right face (yellow)
+            {{.5f, -.5f, -.5f}, {.8f, .8f, .1f}},
+            {{.5f, .5f, .5f}, {.8f, .8f, .1f}},
+            {{.5f, -.5f, .5f}, {.8f, .8f, .1f}},
+            {{.5f, -.5f, -.5f}, {.8f, .8f, .1f}},
+            {{.5f, .5f, -.5f}, {.8f, .8f, .1f}},
+            {{.5f, .5f, .5f}, {.8f, .8f, .1f}},
 
-        gameObjects.push_back(std::move(triangle));
+            // top face (orange, remember y axis points down)
+            {{-.5f, -.5f, -.5f}, {.9f, .6f, .1f}},
+            {{.5f, -.5f, .5f}, {.9f, .6f, .1f}},
+            {{-.5f, -.5f, .5f}, {.9f, .6f, .1f}},
+            {{-.5f, -.5f, -.5f}, {.9f, .6f, .1f}},
+            {{.5f, -.5f, -.5f}, {.9f, .6f, .1f}},
+            {{.5f, -.5f, .5f}, {.9f, .6f, .1f}},
+
+            // bottom face (red)
+            {{-.5f, .5f, -.5f}, {.8f, .1f, .1f}},
+            {{.5f, .5f, .5f}, {.8f, .1f, .1f}},
+            {{-.5f, .5f, .5f}, {.8f, .1f, .1f}},
+            {{-.5f, .5f, -.5f}, {.8f, .1f, .1f}},
+            {{.5f, .5f, -.5f}, {.8f, .1f, .1f}},
+            {{.5f, .5f, .5f}, {.8f, .1f, .1f}},
+
+            // nose face (blue)
+            {{-.5f, -.5f, 0.5f}, {.1f, .1f, .8f}},
+            {{.5f, .5f, 0.5f}, {.1f, .1f, .8f}},
+            {{-.5f, .5f, 0.5f}, {.1f, .1f, .8f}},
+            {{-.5f, -.5f, 0.5f}, {.1f, .1f, .8f}},
+            {{.5f, -.5f, 0.5f}, {.1f, .1f, .8f}},
+            {{.5f, .5f, 0.5f}, {.1f, .1f, .8f}},
+
+            // tail face (green)
+            {{-.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
+            {{.5f, .5f, -0.5f}, {.1f, .8f, .1f}},
+            {{-.5f, .5f, -0.5f}, {.1f, .8f, .1f}},
+            {{-.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
+            {{.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
+            {{.5f, .5f, -0.5f}, {.1f, .8f, .1f}},
+
+        };
+        for (auto &v : vertices)
+        {
+            v.position += offset;
+        }
+        return std::make_unique<MageModel>(device, vertices);
+    }
+
+    void FirstApp::loadGameObjects()
+    {
+        std::shared_ptr<MageModel> mageModel = createCubeModel(mageDevice, {0.f, 0.f, 0.f});
+
+        auto cube = MageGameObject::createGameObject();
+        cube.model = mageModel;
+        cube.transform.translation = {.0f, .0f, 2.5f};
+        cube.transform.scale = {.5f, .5f, .5f};
+        gameObjects.push_back(std::move(cube));
     }
 
 } // namespace mage

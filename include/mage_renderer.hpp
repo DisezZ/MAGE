@@ -19,6 +19,7 @@ namespace mage
         ~MageRenderer();
 
         VkRenderPass getSwapChainRenderPass() const { return mageSwapChain->getRenderPass(); }
+        float getAspectRatio() const { return mageSwapChain->extentAspectRatio(); }
         bool isFrameInProgress() const { return isFrameStarted; }
 
         VkCommandBuffer getCurrentCommandBuffer() const {
