@@ -5,11 +5,9 @@
 
 #include "no_copy.hpp"
 #include "mage_window.hpp"
-#include "mage_pipeline.hpp"
 #include "mage_device.hpp"
-#include "mage_swap_chain.hpp"
-#include "mage_model.hpp"
 #include "mage_game_object.hpp"
+#include "mage_renderer.hpp"
 
 namespace mage
 {
@@ -26,21 +24,11 @@ namespace mage
 
     private:
         void loadGameObjects();
-        void createPipelineLayout();
-        void createPipeline();
-        void createCommandBuffers();
-        void freeCommandBuffers();
-        void drawFrame();
-        void recreateSwapChain();
-        void recordCommandBuffer(int imageIndex);
-        void renderGameObjects(VkCommandBuffer commandBuffer);
 
         MageWindow mageWindow{WIDTH, HEIGHT, "Vulkan::Mage Engine"};
         MageDevice mageDevice{mageWindow};
-        std::unique_ptr<MageSwapChain> mageSwapChain;
-        std::unique_ptr<MagePipeline> magePipeline;
-        VkPipelineLayout pipelineLayout;
-        std::vector<VkCommandBuffer> commandBuffers;
+        MageRenderer mageRenderer{mageWindow, mageDevice};
+        
         std::vector<MageGameObject> gameObjects;
     };
 } // namespace mage
