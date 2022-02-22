@@ -28,11 +28,15 @@ INCLUDE	:= include
 # define lib directory
 LIB		:= lib
 
+# define object directory
+OBJ		:= object
+
 ifeq ($(OS),Windows_NT)
 MAIN	:= main.exe
 SOURCEDIRS	:= $(SRC)
 INCLUDEDIRS	:= $(INCLUDE)
 LIBDIRS		:= $(LIB)
+OBJECTDIRS	:= $(OBJ)
 FIXPATH = $(subst /,\,$1)
 RM			:= del /q /f
 MD	:= mkdir
@@ -41,6 +45,7 @@ MAIN	:= main.out
 SOURCEDIRS	:= $(shell find $(SRC) -type d)
 INCLUDEDIRS	:= $(shell find $(INCLUDE) -type d)
 LIBDIRS		:= $(shell find $(LIB) -type d)
+OBJECTDIRS	:= $(shell find $(OBJ) -type d)
 FIXPATH = $1
 RM = rm -f
 MD	:= mkdir -p
@@ -56,7 +61,8 @@ LIBS		:= $(patsubst %,-L%, $(LIBDIRS:%/=%))
 SOURCES		:= $(wildcard $(patsubst %,%/*.cpp, $(SOURCEDIRS)))
 
 # define the C object files 
-OBJECTS		:= $(SOURCES:.cpp=.o)
+#OBJECTS		:= $(SOURCES:.cpp=.o)
+OBJECTS		:= $(SOURCES:$(SOURCEDIRS)/%.cpp=$(OBJECTDIRS)/%.o)
 
 # compile and create list of .spv file for vertex and fragment shader
 vertSources = $(shell find ./shaders -type f -name "*.vert")
@@ -87,7 +93,7 @@ $(MAIN): $(OBJECTS)
 # it uses automatic variables $<: the name of the prerequisite of
 # the rule(a .c file) and $@: the name of the target of the rule (a .o file) 
 # (see the gnu make manual section about automatic variables)
-.cpp.o:
+$(OBJECTDIRS)/%.o: $(SOURCEDIRS)/%.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $<  -o $@
 
 %.spv: %
